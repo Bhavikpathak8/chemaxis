@@ -1,6 +1,6 @@
 import { store } from './store.js';
 
-const BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api/v1';
 
 export class ApiError extends Error {
   constructor(message, status = 0, offline = false) {
