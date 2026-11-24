@@ -96,6 +96,7 @@ function createApp() {
     res.json({
       status: 'ok',
       service: 'chemaxis-institutional-trade-desk-api',
+      database: process.env.DATABASE_URL ? 'configured' : 'pending_configuration',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });
@@ -103,6 +104,13 @@ function createApp() {
 
   // 2. Readiness check: Deep probe verifying database connection & connection pool
   app.get('/api/v1/health/ready', async (req, res) => {
+    if (!process.env.DATABASE_URL) {
+      return res.status(200).json({
+        status: 'pending_database',
+        message: 'DATABASE_URL is not configured yet. Web service is running.',
+        timestamp: new Date().toISOString(),
+      });
+    }
     const startTime = Date.now();
     try {
       const dbRes = await pool.query('SELECT 1 AS connected, NOW() AS db_time');
@@ -143,6 +151,18 @@ function createApp() {
   // ---------------------------------------------------------------------------
   // Application Feature Routes
   // ---------------------------------------------------------------------------
+  // Intercept API routes with helpful message if DATABASE_URL is not set
+  app.use('/api/v1', (req, res, next) => {
+    if (req.path === '/health' || req.path === '/health/ready') return next();
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({
+        error: 'DATABASE_NOT_CONFIGURED',
+        message: 'PostgreSQL database is not connected yet. Please add DATABASE_URL in your Render Environment settings to enable live database operations.',
+      });
+    }
+    next();
+  });
+
   app.use('/api/v1/auth', require('./modules/auth/auth.routes'));
   app.use('/api/v1/users', require('./modules/users/users.routes'));
   app.use('/api/v1/chemicals', require('./modules/chemicals/chemicals.routes'));

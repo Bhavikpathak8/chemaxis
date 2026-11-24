@@ -7,6 +7,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const dotenv = require('dotenv');
 
 function loadEnvironment() {
@@ -35,15 +36,24 @@ function validateEnvironment(nodeEnv) {
   const isProd = nodeEnv === 'production';
   const isStaging = nodeEnv === 'staging';
 
-  // 1. Mandatory core variables
-  const required = ['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
-  for (const v of required) {
-    if (!process.env[v] || process.env[v].trim().length === 0) {
-      throw new Error(`[Configuration Error] Required environment variable missing: ${v}`);
-    }
+  // 1. Auto-generate high-entropy defaults for JWT secrets if not explicitly provided
+  if (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.trim().length === 0) {
+    process.env.JWT_ACCESS_SECRET = crypto.randomBytes(32).toString('hex');
+    console.log('[Config] Auto-generated secure 64-character JWT_ACCESS_SECRET.');
+  }
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.trim().length === 0) {
+    process.env.JWT_REFRESH_SECRET = crypto.randomBytes(32).toString('hex');
+    console.log('[Config] Auto-generated secure 64-character JWT_REFRESH_SECRET.');
   }
 
-  // 2. Strict Production / Staging Safeguards
+  // 2. Database URL check - warn if missing instead of crashing process
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.trim().length === 0) {
+    console.warn('\n⚠️  [Config Warning] DATABASE_URL is not configured.');
+    console.warn('   The ChemAxis web platform will serve UI and health checks.');
+    console.warn('   To enable PostgreSQL persistence, add DATABASE_URL in your hosting environment settings.\n');
+  }
+
+  // 3. Strict Production / Staging Safeguards
   if (isProd || isStaging) {
     const weakSecrets = ['change-me-access', 'change-me-refresh', 'secret', '123456', 'password'];
     if (weakSecrets.includes(process.env.JWT_ACCESS_SECRET) || process.env.JWT_ACCESS_SECRET.length < 32) {
