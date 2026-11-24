@@ -10,6 +10,27 @@ const server = app.listen(port, () => {
   console.log(`[ChemAxis API] Institutional Chemical Trade Desk running on http://localhost:${port}/api/v1`);
   console.log(`[ChemAxis API] Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`[ChemAxis API] Health check ready at http://localhost:${port}/api/v1/health/ready`);
+
+  // Automatically execute pending database migrations and seed default data if DB is connected
+  if (process.env.DATABASE_URL) {
+    const { run: runMigrations } = require('../scripts/migrate');
+    runMigrations()
+      .then(async () => {
+        console.log('[ChemAxis DB] Migrations verified and executed successfully.');
+        try {
+          const userCount = await pool.query('SELECT COUNT(*) AS count FROM users');
+          if (Number(userCount.rows[0]?.count) === 0) {
+            console.log('[ChemAxis DB] Fresh database detected. Seeding initial accounts...');
+            const { seedDemo } = require('../scripts/seed-demo');
+            await seedDemo(pool);
+            console.log('[ChemAxis DB] Initial accounts seeded successfully.');
+          }
+        } catch (seedErr) {
+          console.warn('[ChemAxis DB Seed Warning]:', seedErr.message);
+        }
+      })
+      .catch((err) => console.error('[ChemAxis Migration Error]:', err.message));
+  }
 });
 
 // -----------------------------------------------------------------------------

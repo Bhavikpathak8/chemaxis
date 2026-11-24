@@ -1,14 +1,14 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const { pool } = require('../src/db/pool');
+const { pool: defaultPool } = require('../src/db/pool');
 
 const DEMO_ADMIN = { email: 'admin@ctech.com', password: 'Admin@12345' };
 const DEMO_SELLER = { email: 'seller@ctech.com', password: 'Seller@12345' };
 const DEMO_BUYER = { email: 'buyer@ctech.com', password: 'Buyer@12345' };
 
-async function upsertUser(email, password, role) {
+async function upsertUser(dbPool, email, password, role) {
   const passwordHash = await bcrypt.hash(password, 12);
-  const { rows } = await pool.query(
+  const { rows } = await dbPool.query(
     `INSERT INTO users (email, password_hash, role)
      VALUES ($1, $2, $3)
      ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = now()
@@ -18,21 +18,13 @@ async function upsertUser(email, password, role) {
   return rows[0].id;
 }
 
-async function main() {
-  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'true') {
-    console.error(
-      'Refusing to seed demo accounts because NODE_ENV=production. ' +
-        'Set ALLOW_DEMO_SEED=true if you really want this (not recommended for a live deployment).',
-    );
-    process.exit(1);
-  }
+async function seedDemo(dbPool = defaultPool) {
+  console.log('[ChemAxis Seed] Seeding demo data...\n');
 
-  console.log('Seeding C-Tech v2 demo data...\n');
+  await upsertUser(dbPool, DEMO_ADMIN.email, DEMO_ADMIN.password, 'SUPER_ADMIN');
 
-  await upsertUser(DEMO_ADMIN.email, DEMO_ADMIN.password, 'SUPER_ADMIN');
-
-  const sellerUserId = await upsertUser(DEMO_SELLER.email, DEMO_SELLER.password, 'SELLER');
-  const sellerResult = await pool.query(
+  const sellerUserId = await upsertUser(dbPool, DEMO_SELLER.email, DEMO_SELLER.password, 'SELLER');
+  const sellerResult = await dbPool.query(
     `INSERT INTO sellers (user_id, company_name, gst_number, gst_verified, address, city, state, pincode, verification_status, verified_at)
      VALUES ($1, $2, $3, TRUE, $4, $5, $6, $7, 'APPROVED', now())
      ON CONFLICT (user_id) DO UPDATE SET updated_at = now()
@@ -49,8 +41,8 @@ async function main() {
   );
   const sellerId = sellerResult.rows[0].id;
 
-  const buyerUserId = await upsertUser(DEMO_BUYER.email, DEMO_BUYER.password, 'BUYER');
-  await pool.query(
+  const buyerUserId = await upsertUser(dbPool, DEMO_BUYER.email, DEMO_BUYER.password, 'BUYER');
+  await dbPool.query(
     `INSERT INTO buyers (user_id, company_name, gst_number, gst_verified, address, city, state, pincode, verification_status)
      VALUES ($1, $2, $3, TRUE, $4, $5, $6, $7, 'APPROVED')
      ON CONFLICT (user_id) DO UPDATE SET updated_at = now()`,
@@ -65,12 +57,12 @@ async function main() {
     ],
   );
 
-  const existingChemical = await pool.query(
+  const existingChemical = await dbPool.query(
     `SELECT id FROM chemicals WHERE seller_id = $1 AND name = 'Phenol'`,
     [sellerId],
   );
   if (existingChemical.rows.length === 0) {
-    const chemResult = await pool.query(
+    const chemResult = await dbPool.query(
       `INSERT INTO chemicals
          (seller_id, name, category, cas_number, purity, unit, seller_price, buyer_price,
           margin_type, margin_value, warehouse_location, description)
@@ -79,24 +71,27 @@ async function main() {
        RETURNING id`,
       [sellerId],
     );
-    await pool.query(
+    await dbPool.query(
       `INSERT INTO inventory (chemical_id, quantity_available) VALUES ($1, 5000)`,
       [chemResult.rows[0].id],
     );
   }
 
-  console.log('Demo accounts ready:\n');
+  console.log('[ChemAxis Seed] Demo accounts ready:');
   console.log(`  Super Admin  ->  ${DEMO_ADMIN.email}  /  ${DEMO_ADMIN.password}`);
   console.log(`  Seller       ->  ${DEMO_SELLER.email}  /  ${DEMO_SELLER.password}`);
   console.log(`  Buyer        ->  ${DEMO_BUYER.email}   /  ${DEMO_BUYER.password}`);
-  console.log('\nSeller and Buyer are pre-approved, and a priced, in-stock Phenol listing is ready.');
 }
 
-main()
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await pool.end();
-  });
+if (require.main === module) {
+  seedDemo()
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await defaultPool.end();
+    });
+}
+
+module.exports = { seedDemo };

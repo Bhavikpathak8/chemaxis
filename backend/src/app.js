@@ -70,7 +70,10 @@ function createApp() {
         explicitOrigins.includes(origin) ||
         /^http:\/\/(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin) ||
         /\.ngrok(-free)?\.app$/.test(origin) ||
-        /\.loca\.lt$/.test(origin)
+        /\.loca\.lt$/.test(origin) ||
+        /\.lhr\.life$/.test(origin) ||
+        /\.vercel\.app$/.test(origin) ||
+        /\.onrender\.com$/.test(origin)
       ) {
         return callback(null, true);
       }
