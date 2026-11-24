@@ -1,0 +1,266 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+
+/* C-Tech trade desk — design tokens (DESIGN_SYSTEM.md: Emerald primary,
+   Slate Blue secondary, Amber accent, Red danger, white/light-gray ground,
+   Inter + JetBrains Mono for figures). The paper tone is a cool green-gray
+   so the white work surfaces read as printed ledger sheets. */
+@theme {
+  --color-paper: #f1f4f2;
+  --color-surface: #ffffff;
+  --color-line: #dbe1de;
+  --color-line-strong: #bfc8c4;
+  --color-ink: #1b2433;
+  --color-ink-2: #4a5666;
+  --color-ink-3: #65717f;
+
+  --color-brand: #0b7a55;
+  --color-brand-deep: #08603f;
+  --color-brand-wash: #e4f2ec;
+
+  --color-slate: #2e3d5c;
+  --color-slate-deep: #1c2740;
+  --color-slate-soft: #8d9bb8;
+  --color-slate-wash: #e8ecf3;
+
+  --color-amber: #8f5a03;
+  --color-amber-mark: #d68f12;
+  --color-amber-wash: #fbf0d9;
+
+  --color-danger: #b3261e;
+  --color-danger-wash: #fbe8e6;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  font-feature-settings: "cv05", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { letter-spacing: -0.012em; font-weight: 600; }
+::selection { background: var(--color-brand-wash); }
+:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+
+/* Figures — prices, quantities, GSTIN, CAS and PO numbers — always mono + tabular. */
+.fig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+@layer components {
+  .btn {
+    @apply inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-[5px] border px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply border-brand bg-brand text-white hover:bg-brand-deep hover:border-brand-deep; }
+  .btn-quiet { @apply border-line-strong bg-surface text-ink hover:bg-paper; }
+  .btn-danger { @apply border-line-strong bg-surface text-danger hover:border-danger hover:bg-danger-wash; }
+  .btn-ghost { @apply border-transparent bg-transparent text-ink-2 hover:bg-slate-wash; }
+  .btn-sm { @apply h-8 px-2.5 text-[12.5px]; }
+
+  .input {
+    @apply h-9 w-full rounded-[5px] border border-line-strong bg-surface px-3 text-[14px] text-ink placeholder:text-ink-3 transition-colors;
+  }
+  .input:focus { @apply border-brand outline-none ring-2 ring-brand/20; }
+  .input[aria-invalid="true"] { @apply border-danger ring-2 ring-danger/15; }
+  textarea.input { @apply h-auto min-h-20 py-2; }
+  select.input { @apply pr-8; }
+  .input:disabled { @apply bg-paper text-ink-3; }
+
+  .tbl { @apply w-full border-collapse text-[13.5px]; font-variant-numeric: tabular-nums; }
+  .tbl th { @apply whitespace-nowrap border-b border-line-strong bg-paper px-3 py-2 text-left text-[12.5px] font-medium text-ink-2; }
+  .tbl td { @apply border-b border-line px-3 py-2.5 align-middle; }
+  .tbl tbody tr:last-child td { @apply border-b-0; }
+  .tbl tbody tr.is-click { @apply cursor-pointer; }
+  .tbl tbody tr.is-click:hover td { @apply bg-brand-wash/40; }
+}
+
+/* Slide-in panels answer a click, so they move; everything else is still. */
+@keyframes panel-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.anim-panel { animation: panel-in 0.18s ease-out both; }
+.anim-scrim { animation: scrim-in 0.18s ease-out both; }
+.anim-rise { animation: rise 0.16s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-panel, .anim-scrim, .anim-rise { animation: none; }
+}
+
+@media print {
+  aside, header, nav, .no-print { display: none !important; }
+}
+
+/* Document numbers and amounts never wrap mid-token in tables. */
+.tbl .fig { white-space: nowrap; }
+
+/* Corporate High-End Tokens */
+.border-subtle { border-color: #e2e8e5; }
+.bg-canvas { background-color: #f8faf9; }
+.card-corporate {
+  background: #ffffff;
+  border: 1px solid #e2e8e5;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card-corporate:hover {
+  border-color: #0b7a55;
+  box-shadow: 0 10px 25px -5px rgba(11, 122, 85, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+/* =========================================================================
+   IMPORTANT GLOBAL ANIMATIONS
+   1. Product Hover Effects (3D lift, deep shadow & image zoom)
+   2. Global Network Map (flowing connection dashes & pulse beacons)
+   ========================================================================= */
+
+/* Product Card 3D Lift & Shadow */
+.product-card {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 30px -10px rgba(11, 122, 85, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(11, 122, 85, 0.45);
+}
+
+/* Product Image Zoom */
+.product-card-img {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-card:hover .product-card-img,
+.group:hover .product-card-img {
+  transform: scale(1.07);
+}
+
+/* Global Network Map Animation */
+@keyframes dash-flow {
+  from {
+    stroke-dashoffset: 80;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes map-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.map-line-flow {
+  stroke-dasharray: 6 6;
+  animation: dash-flow 2.8s linear infinite;
+}
+
+.map-node-pulse {
+  transform-origin: center;
+  animation: map-pulse 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+/* =========================================================================
+   SLEEK MODERN SCROLLBARS (Universal across Chrome, Edge, Firefox, Safari)
+   Replaces Windows default 17px wide grey bar with arrow buttons.
+   ========================================================================= */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+/* Chrome, Edge, Safari WebKit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 122, 85, 0.65);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Explicitly disable / hide the ugly triangle arrow buttons on Windows */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Dark mode / dark sidebar scrollbar styling */
+.dark-scrollbar,
+aside.bg-slate-deep,
+aside.bg-slate-deep nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb,
+aside.bg-slate-deep::-webkit-scrollbar-thumb,
+aside.bg-slate-deep nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover,
+aside.bg-slate-deep::-webkit-scrollbar-thumb:hover,
+aside.bg-slate-deep nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* SlidePanel custom smooth scrollbar */
+.panel-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(11, 122, 85, 0.3) transparent;
+}
+
+.panel-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.panel-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(11, 122, 85, 0.3);
+  border-radius: 9999px;
+}
+
+.panel-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 122, 85, 0.6);
+}
+
+
+
+
+
