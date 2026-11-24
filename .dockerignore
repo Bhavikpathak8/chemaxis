@@ -1,0 +1,14 @@
+node_modules
+.git
+.github
+.env*
+!.env.example
+!.env.production.example
+backend/uploads/*
+!backend/uploads/.gitkeep
+logs
+*.log
+dist
+frontend/dist
+.DS_Store
+Thumbs.db

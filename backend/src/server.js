@@ -31,21 +31,21 @@ async function handleGracefulShutdown(signal) {
 
   server.close(async (err) => {
     if (err) {
-      console.error('[C-Tech API] Error during HTTP server close:', err.message);
+      console.error('[ChemAxis API] Error during HTTP server close:', err.message);
     } else {
-      console.log('[C-Tech API] HTTP server closed: no longer accepting connections.');
+      console.log('[ChemAxis API] HTTP server closed: no longer accepting connections.');
     }
 
     try {
-      console.log('[C-Tech API] Draining PostgreSQL connection pool...');
+      console.log('[ChemAxis API] Draining PostgreSQL connection pool...');
       await pool.end();
-      console.log('[C-Tech API] PostgreSQL pool successfully terminated.');
+      console.log('[ChemAxis API] PostgreSQL pool successfully terminated.');
     } catch (poolErr) {
-      console.error('[C-Tech API] Error draining PostgreSQL pool:', poolErr.message);
+      console.error('[ChemAxis API] Error draining PostgreSQL pool:', poolErr.message);
     }
 
     clearTimeout(forceTimer);
-    console.log('[C-Tech API] Graceful shutdown complete. Exiting cleanly.');
+    console.log('[ChemAxis API] Graceful shutdown complete. Exiting cleanly.');
     process.exit(0);
   });
 }

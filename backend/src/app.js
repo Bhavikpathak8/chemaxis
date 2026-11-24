@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -166,6 +168,18 @@ function createApp() {
   app.use('/api/v1/analytics', require('./modules/analytics/analytics.routes'));
   app.use('/api/v1/exports', require('./modules/exports/exports.routes'));
   app.use('/api/v1/backup', require('./modules/backup/backup.routes'));
+
+  // Serve frontend static build if present (Unified monolithic deployment)
+  const clientDist = path.resolve(__dirname, '../../frontend/dist');
+  if (fs.existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+        return next();
+      }
+      res.sendFile(path.join(clientDist, 'index.html'));
+    });
+  }
 
   app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
   app.use(errorHandler);

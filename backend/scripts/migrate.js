@@ -10,7 +10,22 @@ const { Pool } = require('pg');
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
 async function run() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  if (!process.env.DATABASE_URL) {
+    console.warn('[Migrations] No DATABASE_URL set. Skipping migrations.');
+    return;
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sslMode =
+    process.env.DATABASE_SSL === 'true' ||
+    (isProduction &&
+      !process.env.DATABASE_URL.includes('localhost') &&
+      !process.env.DATABASE_URL.includes('127.0.0.1'));
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ...(sslMode ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
 
   try {
     await pool.query(`
@@ -61,7 +76,11 @@ async function run() {
   }
 }
 
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  run().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { run };
